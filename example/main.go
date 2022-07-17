@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/et-zone/ees"
-	"github.com/xwb1989/sqlparser"
+	"github.com/et-zone/sqlparser"
 
 	// "github.com/et-zone/etest/mock"
 	"github.com/olivere/elastic/v7"
 )
 
-var host = "http://127.0.0.1:9200"
+var host = "http://118.195.239.37:9200"
 var table = "stu"
 
 type Result struct {
@@ -139,20 +139,20 @@ func main() {
 	// sql:="select * from stu where icon between 0 and 1000 "
 	// sql:="select * from stu where id > 0 and id< 1000 limit 10"
 
-	sql := "select * from stu where name = 'aa bb'  limit 100"
-	dat := &[]Result{}
-	ctx := context.TODO()
-	cout, err := ees.SelectSql(ctx, sql, dat)
-	if err != nil {
-		fmt.Printf("search es data failed | err : %s\n", err)
-		return
-	}
-	fmt.Println(cout)
-
-	for _, d := range *dat {
-		b, _ := json.Marshal(d)
-		fmt.Println(string(b))
-	}
+	//sql := "select * from stu where name = 'aa bb'  limit 100"
+	//dat := &[]Result{}
+	//ctx := context.TODO()
+	//cout, err := ees.SelectSql(ctx, sql, dat)
+	//if err != nil {
+	//	fmt.Printf("search es data failed | err : %s\n", err)
+	//	return
+	//}
+	//fmt.Println(cout)
+	//
+	//for _, d := range *dat {
+	//	b, _ := json.Marshal(d)
+	//	fmt.Println(string(b))
+	//}
 
 	////删除es数据
 	// delRep, err := ees.DeleteESItemByID(ctx, table, 111111)

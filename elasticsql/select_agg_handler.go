@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/xwb1989/sqlparser"
+	"github.com/et-zone/sqlparser"
 )
 
 // msi stands for map[string]interface{}

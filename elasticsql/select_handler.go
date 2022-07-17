@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/xwb1989/sqlparser"
+	"github.com/et-zone/sqlparser"
 )
 
 func handleSelect(sel *sqlparser.Select) (dsl string, esType string, err error) {
