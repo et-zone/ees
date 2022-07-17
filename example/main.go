@@ -16,7 +16,8 @@ var host = "http://118.195.239.37:9200"
 var table = "stu"
 
 type Result struct {
-	ID   int64    `json:"id"`
+	BB   int64    `json:"bbb"`
+	ID   int64    `json:"aa"`
 	Name string   `json:"name"`
 	High float64  `json:"high"`
 	TNow string   `json:"ntime"`
@@ -84,25 +85,26 @@ func main() {
 
 	//***********Upsert One************
 	////
-	//ctx := context.TODO()
-	//nearbyObj := &Result{
-	//	ID:   211158,
-	//	Name: "bbdd",
-	//	High: 12.30,
-	//	TNow: "2021-08-05 00:12:20",
-	//	List: []string{"aa", "bb", "cc"},
-	//	Flag: "ff gg",
-	//	IsOK: true,
-	//	Geo:  ees.Geo{10.0001,22.003},
-	//	IP:   "127.0.0.1",
-	//}
-	//isok, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", nearbyObj.ID), nearbyObj)
-	//
-	//if err != nil {
-	//	fmt.Printf("failed | err : %s\n", err)
-	//	return
-	//}
-	//fmt.Println(isok)
+	ctx := context.TODO()
+	nearbyObj := &Result{ //
+		ID:   211158,
+		BB: 1111,
+		Name: "bbdd",
+		High: 12.30,
+		TNow: "2021-08-05 00:12:20",
+		List: []string{"aa", "bb", "cc"},
+		Flag: "ff gg",
+		IsOK: true,
+		Geo:  ees.Geo{10.0001,22.003},
+		IP:   "127.0.0.1",
+	}
+	isok, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", nearbyObj.ID), nearbyObj)
+
+	if err != nil {
+		fmt.Printf("failed | err : %s\n", err)
+		return
+	}
+	fmt.Println(isok)
 
 
 	//***********ADD ALL************
@@ -155,7 +157,7 @@ func main() {
 	//}
 
 	////删除es数据
-	// delRep, err := ees.DeleteESItemByID(ctx, table, 111111)
+	// delRep, err := ees.DelESItemByID(ctx, table, 111111)
 	// if err != nil {
 	// 	fmt.Printf("delete es data failed | err : %s\n", err)
 	// 	return
@@ -163,7 +165,7 @@ func main() {
 	// fmt.Printf("%+v\n", delRep)
 
 	//批量删除
-	// delRep, err := ees.DeleteESItemByIDs(ctx, table, []interface{}{111118, 111119})
+	// delRep, err := ees.DelESItemByIDs(ctx, table, []interface{}{111118, 111119})
 	// if err != nil {
 	// 	fmt.Printf("delete es data failed | err : %s\n", err)
 	// 	return
@@ -171,14 +173,14 @@ func main() {
 	// fmt.Printf("%+v\n", delRep)
 
 	//删表
-	//delRep, err := ees.DeleteTable(ctx, table)
+	//delRep, err := ees.DelTable(ctx, table)
 	//if err != nil {
 	//	fmt.Printf("delete es data failed | err : %s\n", err)
 	//	return
 	//}
 	//fmt.Printf("%+v\n", delRep)
 
-	//mp, err := ees.GetTableInfo(ctx, table)
+	//mp, err := ees.GetTableDetail(ctx, table)
 	//if err != nil {
 	//	fmt.Println(err.Error())
 	//}
@@ -214,7 +216,7 @@ func Test_INIT_Table() {
 	fmt.Println(isok)
 
 	//删表
-	// delRep, err := ees.DeleteTable(ctx, table)
+	// delRep, err := ees.DelTable(ctx, table)
 	// if err != nil {
 	// 	fmt.Printf("delete es data failed | err : %s\n", err)
 	// 	return
@@ -222,7 +224,7 @@ func Test_INIT_Table() {
 	// fmt.Printf("%+v\n", delRep)
 
 	//	查看
-	mp, err := ees.GetTableInfo(ctx, table)
+	mp, err := ees.GetTableDetail(ctx, table)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

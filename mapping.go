@@ -74,6 +74,7 @@ func (f Type) Text() string {
 	return "text"
 }
 
+//搜索完全匹配
 func (f Type) Keyword() string {
 	return "keyword"
 }
@@ -141,12 +142,12 @@ func (o IndexOptions) Offsets() string {
 
 type Analyzer int
 
-//索引时分词
+//索引时分词,最细拆分
 func (a Analyzer) IkMaxWord() string {
 	return "ik_max_word"
 }
 
-//搜索时分词
+//搜索时分词,粗略拆分
 func (a Analyzer) IkSmart() string {
 	return "ik_smart"
 }
@@ -158,13 +159,18 @@ type SearchAnalyzer int
 func (a SearchAnalyzer) IkSmart() string {
 	return "ik_smart"
 }
+//索引时分词,最细拆分
+func (a SearchAnalyzer) IkMaxWord() string {
+	return "ik_max_word"
+}
+
 
 type Field struct {
 	Type           string `json:"type"`
 	Index          bool   `json:"index,omitempty"`           //默认选true，支持搜索,旧版本使用:"not_analyzed"
 	Format         string `json:"format,omitempty"`          //时间类型格式化
-	Analyzer       string `json:"analyzer,omitempty"`        //索引存储阶段和搜索阶段都分词，索引时用ik_max_word，搜索时分词器用ik_smart
-	SearchAnalyzer string `json:"search_analyzer,omitempty"` //搜索阶段分词，会覆盖上面的属性 ，"search_analyzer": "ik_smart"
+	Analyzer       string `json:"analyzer,omitempty"`        //写入时就进行分词，最大拆分=ik_max_word,粗略拆分=ik_smart  //text使用
+	SearchAnalyzer string `json:"search_analyzer,omitempty"` //搜索阶段进行分词，会覆盖上面的属性 ，"search_analyzer": "ik_smart"  //text使用
 	// IgnoreAbove int64  `json:"ignore_above,omitempty"` //对超过 ignore_above 的字符串，analyzer 不会进行处理
 	// NullValue   string `json:"null_value,omitempty"` //支持字段为null，只有keyword类型支持，自定义Mapping常用参数，实际操作时不存储null数据
 	// Store bool `json:"store,omitempty"` //(用于单独存储该field的原始值)默认情况下已存储
@@ -194,11 +200,13 @@ func (f *Field) SetFormat(fmat string) *Field {
 	return f
 }
 
+// text to ik when save
 func (f *Field) SetAnalyzer(a string) *Field {
 	f.Analyzer = a
 	return f
 }
 
+// text to ik when search
 func (f *Field) SetSearchAnalyzer(s string) *Field {
 	f.SearchAnalyzer = s
 	return f

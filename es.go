@@ -43,10 +43,11 @@ func InitESClient(opts ...elastic.ClientOptionFunc) (err error) {
 	return
 }
 
+//Here we think table = index, all _type = default("_doc")
 func InitTable(ctx context.Context, table string, mappings interface{}) (bool, error) {
+	//_type default = "_doc"
 
 	isExit, _ := client.IndexExists(table).Do(ctx)
-
 	if isExit {
 		return true, nil
 	}
@@ -56,7 +57,7 @@ func InitTable(ctx context.Context, table string, mappings interface{}) (bool, e
 }
 
 func UpsertOneESData(ctx context.Context, table string, id string, value interface{}) (isok bool, err error) {
-	doc := elastic.NewBulkUpdateRequest().Index(table).Type("_doc").Id(id).Doc(value).DocAsUpsert(true)
+	doc := elastic.NewBulkUpdateRequest().Index(table).Id(id).Doc(value).DocAsUpsert(true)
 	bulk := client.Bulk()
 	rep, err := bulk.Add(doc).Do(ctx)
 
@@ -72,7 +73,7 @@ func UpsertOneESData(ctx context.Context, table string, id string, value interfa
 func UpsertAllESData(ctx context.Context, table string, values map[string]interface{}) (int64, error) {
 	docs := []elastic.BulkableRequest{}
 	for k, v := range values {
-		doc := elastic.NewBulkUpdateRequest().Index(table).Type("_doc").Id(k).Doc(v).DocAsUpsert(true)
+		doc := elastic.NewBulkUpdateRequest().Index(table).Id(k).Doc(v).DocAsUpsert(true)
 		docs = append(docs, doc)
 	}
 	bulk := client.Bulk()
@@ -171,7 +172,7 @@ func SelectSql(ctx context.Context, sql string, out interface{}) (total int64, e
 }
 
 //删除数据
-func DeleteESItemByID(ctx context.Context, tableName string, id int64) (isDel bool, err error) {
+func DelESItemByID(ctx context.Context, tableName string, id int64) (isDel bool, err error) {
 
 	if tableName == "" || id == 0 {
 		return false, errors.New("table or id not null")
@@ -188,7 +189,7 @@ func DeleteESItemByID(ctx context.Context, tableName string, id int64) (isDel bo
 }
 
 //ids can int or string
-func DeleteESItemByIDs(ctx context.Context, tableName string, ids []interface{}) (count int64, err error) {
+func DelESItemByIDs(ctx context.Context, tableName string, ids []interface{}) (count int64, err error) {
 	if tableName == "" {
 		return 0, errors.New("table not null")
 	}
@@ -205,7 +206,7 @@ func DeleteESItemByIDs(ctx context.Context, tableName string, ids []interface{})
 
 }
 
-func DeleteTable(ctx context.Context, tableName string) (isok bool, err error) {
+func DelTable(ctx context.Context, tableName string) (isok bool, err error) {
 	if tableName == "" {
 		return false, errors.New("table not null")
 	}
@@ -220,7 +221,7 @@ func DeleteTable(ctx context.Context, tableName string) (isok bool, err error) {
 
 }
 
-func GetTableInfo(ctx context.Context, tableName ...string) (map[string]interface{}, error) {
+func GetTableDetail(ctx context.Context, tableName ...string) (map[string]interface{}, error) {
 	//GetMaping
 	if len(tableName) == 0 {
 		return nil, nil
