@@ -159,11 +159,11 @@ type SearchAnalyzer int
 func (a SearchAnalyzer) IkSmart() string {
 	return "ik_smart"
 }
+
 //索引时分词,最细拆分
 func (a SearchAnalyzer) IkMaxWord() string {
 	return "ik_max_word"
 }
-
 
 type Field struct {
 	Type           string `json:"type"`

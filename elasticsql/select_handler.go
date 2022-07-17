@@ -75,22 +75,22 @@ func handleSelect(sel *sqlparser.Select) (dsl string, esType string, err error) 
 			orderByArr = append(orderByArr, orderByStr)
 		}
 	}
-	b:=sqlparser.NewTrackedBuffer(nil)
+	b := sqlparser.NewTrackedBuffer(nil)
 	//sel.SelectExprs.Format(b)
 	//fmt.Println(b.String())
-	source:=""
-	le:=len(sel.SelectExprs)
-	for i,exp:=range sel.SelectExprs{
+	source := ""
+	le := len(sel.SelectExprs)
+	for i, exp := range sel.SelectExprs {
 		b.Write([]byte("\""))
 		exp.Format(b)
 		b.Write([]byte("\""))
-		if (le-1)!=i{
+		if (le - 1) != i {
 			b.Write([]byte(" ,"))
 		}
 
 	}
-	if !strings.Contains(b.String(),"*"){
-		source="["+b.String()+"]"
+	if !strings.Contains(b.String(), "*") {
+		source = "[" + b.String() + "]"
 	}
 
 	var resultMap = map[string]interface{}{
@@ -98,8 +98,8 @@ func handleSelect(sel *sqlparser.Select) (dsl string, esType string, err error) 
 		"from":  queryFrom,
 		"size":  querySize,
 	}
-	if source!=""{
-		resultMap["_source"]=source
+	if source != "" {
+		resultMap["_source"] = source
 	}
 
 	if len(aggStr) > 0 {
@@ -111,7 +111,7 @@ func handleSelect(sel *sqlparser.Select) (dsl string, esType string, err error) 
 	}
 
 	// keep the travesal in order, avoid unpredicted json
-	var keySlice = []string{"query", "from", "size", "sort", "aggregations","_source"}
+	var keySlice = []string{"query", "from", "size", "sort", "aggregations", "_source"}
 	var resultArr []string
 	for _, mapKey := range keySlice {
 		if val, ok := resultMap[mapKey]; ok {
