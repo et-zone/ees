@@ -7,98 +7,136 @@ import (
 	"fmt"
 	"github.com/et-zone/ees"
 	"github.com/et-zone/sqlparser"
+	"time"
 
 	// "github.com/et-zone/etest/mock"
 	"github.com/olivere/elastic/v7"
 )
 
-var host = "http://118.195.239.37:9200"
-var table = "stu"
+var host = "http://118.195.243.63:9200"
+var table = "shop"
 
 type Result struct {
-	BB   int64    `json:"bbb"`
-	ID   int64    `json:"aa"`
-	Name string   `json:"name"`
-	High float64  `json:"high"`
-	TNow string   `json:"ntime"`
-	List []string `json:"lis"`
-	Flag string   `json:"flag"` //kwd
-	IsOK bool     `json:"isok"`
-	Geo  ees.Geo  `json:"mgeo"`
-	IP   string   `json:"ip"`
+	ID   int64    `json:"id,omitempty"`
+	NameK string   `json:"name_keyword,omitempty"`//Keyword
+	NameT string   `json:"name_text_default,omitempty"`//text
+	NameA string   `json:"name_text_analyzer,omitempty"`//text Analyzer
+	NameS string   `json:"name_text_s_analyzer,omitempty"`//text sarrch Analyzer
+	High float64  `json:"high,omitempty"`
+	TNow string   `json:"ntime,omitempty"`
+	List []string `json:"lis,omitempty"`//
 }
-
-func main() {
-
-	//初始化es Client
+func init(){
+	//初始化es Client  -- SetSniff 集群使用
 	err := ees.InitESClient(elastic.SetURL(host), elastic.SetSniff(false))
 	if err != nil {
 		fmt.Printf("create es client failed | err : %s\n", err)
+		panic(err)
 		return
 	}
-	//ctx := context.TODO()
-	//***********创建index（table)************
-	//6.X 没有string类型了
-	// mapping := `{
-	//    "mappings": {
-	//        "dynamic": "false",
-	//        "properties": {
-	//            "id": {
-	//                "type": "long",
-	//                "index":true
-	//            },
-	//            "name": {
+}
+func main() {
+	//Test_INIT_Table()
+	//insert()
+	//show()
+	//delTable()
+	//insertAll()
+	//query()
+	//update()
+}
 
-	//                "type": "text"
-	//            },
-	//            "high": {
-	//                "type": "float"
-	//            },
-	//            "ntime": {
-	//                "type": "date",
-	//                "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
-	//            },
-	//            "lis": {
-	//                "type": "text"
-	//            },
-	//            "isok": {
-	//                "type": "boolean"
-	//            },
-	//            "flag": {
-	//                "type": "keyword"
-	//            },
-	//            "mgeo": {
-	//                "type": "geo_point"
-	//            },
-	//            "ip": {
-	//                "type": "ip"
-	//            }
-	//        }
-	//    }
-	// }`
-	// isok, err := ees.InitTable(ctx, table, mapping)
-	// if err != nil {
-	// 	fmt.Println("===1===", err.Error())
-	// }
-	// fmt.Println(isok)
-	//初始化实体对象并添加到es
+func delTable(){
+	//删表
+	ctx := context.TODO()
+	delRep, err := ees.DelTable(ctx, table)
+	if err != nil {
+		fmt.Printf("delete es data failed | err : %s\n", err)
+		return
+	}
+	fmt.Printf("%+v\n", delRep)
+}
 
-	//***********Upsert One************
-	////
+
+func insertAll(){
+	names:=[]string{
+		"zhang san",
+		"li si",
+		"wang wu",
+		"li ming",
+		"liu xiang",
+		"liu qiang dong",
+		"zhou xun",
+		"yang mi",
+		"sun qi",
+		"guo"}
+	lists:=[][]string{
+		[]string{"aa"},
+		[]string{"aa","bb"},
+		[]string{"cc"},
+		[]string{"bb"},
+		[]string{"aa","cc"},
+		[]string{"cc"},
+		[]string{"dd"},
+		[]string{"ee"},
+		[]string{"aa"},
+		[]string{}}
+	ctx := context.TODO()
+
+	for i:=0;i<10;i++{
+		nearbyObj := &Result{ //
+			ID:   211158+int64(i),
+			NameA: names[i],
+			NameK: names[i],
+			NameS: names[i],
+			NameT: names[i],
+			High: 12.30,
+			TNow: time.Now().Format("2006-01-02 15:04:05"),
+			List: lists[i],
+		}
+		_, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", nearbyObj.ID), nearbyObj)
+
+		if err != nil {
+			fmt.Printf("failed | err : %s\n", err)
+		}
+		if i==3||i==7{
+			time.Sleep(time.Second)
+		}
+	}
+
+}
+func insert(){
 	ctx := context.TODO()
 	nearbyObj := &Result{ //
 		ID:   211158,
-		BB: 1111,
-		Name: "bbdd",
 		High: 12.30,
 		TNow: "2021-08-05 00:12:20",
 		List: []string{"aa", "bb", "cc"},
-		Flag: "ff gg",
-		IsOK: true,
-		Geo:  ees.Geo{10.0001,22.003},
-		IP:   "127.0.0.1",
+
 	}
+
 	isok, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", nearbyObj.ID), nearbyObj)
+
+	if err != nil {
+		fmt.Printf("failed | err : %s\n", err)
+		return
+	}
+	fmt.Println(isok)
+}
+
+func update(){
+	//update one field
+
+	//func 1
+	ctx := context.TODO()
+	//nearbyObj := &Result{ //
+	//	High: 19.30,
+	//}
+	//isok, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", 211158), nearbyObj)
+
+	//func 2
+	isok, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", 211158), map[string]interface{}{
+		"high":22,
+	})
 
 	if err != nil {
 		fmt.Printf("failed | err : %s\n", err)
@@ -107,54 +145,58 @@ func main() {
 	fmt.Println(isok)
 
 
+}
+
+
+
+func show(){
+	//	查看
+	ctx := context.TODO()
+	mp, err := ees.GetTableDetail(ctx, table)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	c, _ := json.Marshal(mp)
+	fmt.Println(string(c))
+}
+
+func query(){
 	//***********ADD ALL************
-	//ctx := context.TODO()
-	//datas := map[string]interface{}{}
-	//for i := 35; i <= 36; i++ {
-	//	nearbyObj := &Result{
-	//		ID:   111111 + int64(i),
-	//		//Name: mock.Mock.DefaultString(),
-	//		Name: "aabba",
-	//		High: 10.30 + float64(i),
-	//		TNow: mock.Mock.DefaultDateTime(),
-	//		List: []string{"aa", "bb", "cc"},
-	//		Flag: "ls",
-	//		IsOK: false,
-	//		Geo:  ees.Geo{10.0001, 22.0003},
-	//		IP:   "127.0.0.7",
-	//	}
-	//	datas[fmt.Sprintf("%v", nearbyObj.ID)] = nearbyObj
-	//}
-	//
-	//c, err := ees.UpsertAllESData(ctx, table, datas)
-	//
-	//if err != nil {
-	//	fmt.Printf("failed | err : %s\n", err)
-	//	return
-	//}
-	//fmt.Println(c)
+	ctx := context.TODO()
+
 
 	//***********Select ALL************
 	//sql查询
-	//sql:="select * from stu where id in(\"112\",\"114\",\"115\")"
-	//sql := "select * from stu limit 100"
-	// sql:="select * from stu where icon between 0 and 1000 "
-	// sql:="select * from stu where id > 0 and id< 1000 limit 10"
+	// keyword
+	//sql := "select * from shop where name_keyword='guo' limit 10"
+	//sql := "select * from shop where name_text_default='liu' limit 10"//自动分词
+	//sql := "select * from shop where name_text_analyzer='dong' limit 10"//分词
+	//sql := "select * from shop where name_text_s_analyzer='li' limit 10"//分词
 
-	//sql := "select * from stu where name = 'aa bb'  limit 100"
-	//dat := &[]Result{}
-	//ctx := context.TODO()
-	//cout, err := ees.SelectSql(ctx, sql, dat)
-	//if err != nil {
-	//	fmt.Printf("search es data failed | err : %s\n", err)
-	//	return
-	//}
-	//fmt.Println(cout)
-	//
+
+	// 原始sql不支持array类型的dsl，需要自己写
+	//sql := "select * from shop where lis = 'aa' limit 10"//分词 数组分词了
+
+	//时间可以判断大小 ok
+	//sql := "select * from shop where ntime >= '2022-08-09 17:25:15' limit 10"//分词
+
+	// 数字大小判断 ok
+	sql := "select * from shop where high > 13 limit 10"//分词
+
+	dat := &[]Result{}
+	total, err := ees.QuerySql(ctx, sql, dat)
+	if err != nil {
+		fmt.Printf("search es data failed | err : %s\n", err)
+		return
+	}
+	fmt.Println("total =",total)
+
 	//for _, d := range *dat {
 	//	b, _ := json.Marshal(d)
 	//	fmt.Println(string(b))
 	//}
+	b, _ := json.Marshal(dat)
+	fmt.Println(string(b))
 
 	////删除es数据
 	// delRep, err := ees.DelESItemByID(ctx, table, 111111)
@@ -172,13 +214,7 @@ func main() {
 	// }
 	// fmt.Printf("%+v\n", delRep)
 
-	//删表
-	//delRep, err := ees.DelTable(ctx, table)
-	//if err != nil {
-	//	fmt.Printf("delete es data failed | err : %s\n", err)
-	//	return
-	//}
-	//fmt.Printf("%+v\n", delRep)
+
 
 	//mp, err := ees.GetTableDetail(ctx, table)
 	//if err != nil {
@@ -192,26 +228,27 @@ func main() {
 	//SqlTest()
 }
 
-//结构化创建table
+// 结构化创建table
 func Test_INIT_Table() {
 	ctx := context.TODO()
 	mapping := ees.NewMapping()
-	mapping.SetDynamic(ees.DYNAMIC.False())
-	mapping.SetField("id", ees.NewField().SetType(ees.TYPE.Long()))
-	mapping.SetField("name", ees.NewField().SetType(ees.TYPE.Text()))
-	mapping.SetField("high", ees.NewField().SetType(ees.TYPE.Float()))
-	mapping.SetField("ntime", ees.NewField().SetType(ees.TYPE.Date()).SetFormat(ees.DATE_TIME_FORMAT))
-	mapping.SetField("lis", ees.NewField().SetType(ees.TYPE.Text()))
-	mapping.SetField("isok", ees.NewField().SetType(ees.TYPE.Boolean()))
-	mapping.SetField("flag", ees.NewField().SetType(ees.TYPE.Keyword()))
-	mapping.SetField("mgeo", ees.NewField().SetType(ees.TYPE.Geo()))
-	mapping.SetField("ip", ees.NewField().SetType(ees.TYPE.IP()))
+	mapping.SetDynamic(ees.Dynamic.False())
+	mapping.SetField("id", ees.NewField().SetType(ees.Type.Long()))
+	mapping.SetField("name_keyword", ees.NewField().SetType(ees.Type.Keyword()))
+	mapping.SetField("namet_text_default", ees.NewField().SetType(ees.Type.Text()))
+	mapping.SetField("namet_text_analyzer", ees.NewField().SetType(ees.Type.Text()).SetAnalyzer(ees.IkMaxWord()))
+	mapping.SetField("namet_text_s_analyzer", ees.NewField().SetType(ees.Type.Text()).SetSearchAnalyzer(ees.IkMaxWord()))
+	mapping.SetField("high", ees.NewField().SetType(ees.Type.Float()))
+	mapping.SetField("ntime", ees.NewField().SetType(ees.Type.Date()).SetFormat(ees.DateTimeFormat))
+	mapping.SetField("lis", ees.NewField().SetType(ees.Type.Text()))
+
 
 	b, _ := json.Marshal(mapping.Mappings())
 	fmt.Println("mapping===", string(b))
 	isok, err := ees.InitTable(ctx, table, mapping.Mappings())
 	if err != nil {
 		fmt.Println("===1===", err.Error())
+		return
 	}
 	fmt.Println(isok)
 

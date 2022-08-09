@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
@@ -15,11 +16,11 @@ import (
 )
 
 const (
-	CREATE_SUCC   = "created"
-	UPDATE_SUCC   = "updated"
-	DELETE_SUCC   = "deleted"
-	NOOP          = "noop"
-	DEFAULT_LIMIT = "1000"
+	CreateSucc   = "created"
+	UpdateSucc   = "updated"
+	DeleteSucc   = "deleted"
+	Noop         = "noop"
+	DefaultLimit = "1000"
 )
 
 var client *elastic.Client
@@ -28,18 +29,17 @@ func stop() {
 	client.Stop()
 }
 
-//初始化es客户端
+// init client
 func InitESClient(opts ...elastic.ClientOptionFunc) (err error) {
 	//client, err = elastic.NewClient(
 	//	elastic.SetURL(host),elastic.SetSniff(false),
 	//)
 	client, err = elastic.NewClient(opts...)
 	if err != nil {
-		fmt.Printf("can't connect to elasticsearch | err : %s \n", err)
-		return
+		return errors.New(fmt.Sprintf("can't connect to elasticsearch | err : %s \n", err))
 	}
 
-	fmt.Println("connect to elasticsearch success")
+	log.Println("connect to elasticsearch success")
 	return
 }
 
@@ -53,6 +53,9 @@ func InitTable(ctx context.Context, table string, mappings interface{}) (bool, e
 	}
 
 	rep, err := client.CreateIndex(table).BodyJson(mappings).Do(ctx)
+	if err != nil {
+		return false, err
+	}
 	return rep.ShardsAcknowledged, err
 }
 
@@ -62,14 +65,15 @@ func UpsertOneESData(ctx context.Context, table string, id string, value interfa
 	rep, err := bulk.Add(doc).Do(ctx)
 
 	res := rep.Items[0]
-	if rep.Errors{
-		e,_:=json.Marshal(res["update"].Error)
-		return false ,errors.New(string(e))
+	if rep != nil && rep.Errors {
+		e, _ := json.Marshal(res["update"].Error)
+		return false, errors.New(string(e))
 	}
 	return true, err
 }
 
-//values key is id
+
+// values key is id
 func UpsertAllESData(ctx context.Context, table string, values map[string]interface{}) (int64, error) {
 	docs := []elastic.BulkableRequest{}
 	for k, v := range values {
@@ -83,43 +87,40 @@ func UpsertAllESData(ctx context.Context, table string, values map[string]interf
 		return 0, err
 	}
 
-	if rep.Errors{
-		e,_:=json.Marshal(rep.Items[0]["update"].Error)
-		return 0 ,errors.New(string(e))
+	if rep != nil && rep.Errors {
+		e, _ := json.Marshal(rep.Items[0]["update"].Error)
+		return 0, errors.New(string(e))
 	}
 	return int64(len(rep.Items)), err
 }
 
-//获取数据
-func getESItem(id string) (rep *elastic.GetResult, err error) {
-
+// get data
+func getESItem(index ,id string) (rep *elastic.GetResult, err error) {
 	rep, err = client.Get().
-		Index("poi").
+		Index(index).
 		Id(id).
 		Do(context.Background())
 	return
 }
 
-//查询
-func searchESItem() (rep *elastic.SearchResult, err error) {
+// query
+func queryESItem(index ...string) (rep *elastic.SearchResult, err error) {
 	q := elastic.NewQueryStringQuery("icon:ccc")
-	fmt.Println("q=", q)
-	rep, err = client.Search("poi").
+	rep, err = client.Search(index...).
 		Query(q).
 		Do(context.Background())
 	return
 }
 
-//between 支持数字类型,支持指定字段查询
-func SelectSql(ctx context.Context, sql string, out interface{}) (total int64, err error) {
+// between 支持数字类型,支持指定字段查询
+func QuerySql(ctx context.Context, sql string, result interface{}) (total int64, err error) {
 	if sql == "" {
 		return 0, errors.New("sql is ''")
 	}
 	if !strings.Contains(sql, "limit") && !strings.Contains(sql, "LIMIT") {
-		sql += " limit " + DEFAULT_LIMIT
+		sql += " limit " + DefaultLimit
 	}
 	dsl, table, err := elasticsql.Convert(sql)
-	fmt.Println(dsl)
 	if err != nil {
 		return 0, err
 	}
@@ -127,10 +128,8 @@ func SelectSql(ctx context.Context, sql string, out interface{}) (total int64, e
 	if err != nil {
 		return 0, err
 	}
-	// b, _ := json.Marshal(rep)
-	// fmt.Println("=====", string(b))
 
-	v := reflect.ValueOf(out)
+	v := reflect.ValueOf(result)
 
 	if v.IsNil() {
 		//return 0,errors.New("out []interface{} is nil ")
@@ -152,7 +151,7 @@ func SelectSql(ctx context.Context, sql string, out interface{}) (total int64, e
 			}
 		}
 		dataJson += "]"
-		err := json.Unmarshal([]byte(dataJson), out)
+		err := json.Unmarshal([]byte(dataJson), result)
 		if err != nil {
 			return 0, err
 		}
@@ -161,7 +160,7 @@ func SelectSql(ctx context.Context, sql string, out interface{}) (total int64, e
 	}
 
 	if len > 0 {
-		err := json.Unmarshal(rep.Hits.Hits[0].Source, out)
+		err := json.Unmarshal(rep.Hits.Hits[0].Source, result)
 		if err != nil {
 			return 0, err
 		}
@@ -173,7 +172,6 @@ func SelectSql(ctx context.Context, sql string, out interface{}) (total int64, e
 
 //删除数据
 func DelESItemByID(ctx context.Context, tableName string, id int64) (isDel bool, err error) {
-
 	if tableName == "" || id == 0 {
 		return false, errors.New("table or id not null")
 	}
@@ -182,7 +180,7 @@ func DelESItemByID(ctx context.Context, tableName string, id int64) (isDel bool,
 		Id(fmt.Sprintf("%v", id)).
 		Do(ctx)
 
-	if rep != nil && rep.Result == DELETE_SUCC {
+	if rep != nil && rep.Result == DeleteSucc {
 		return true, err
 	}
 	return false, nil
@@ -199,7 +197,6 @@ func DelESItemByIDs(ctx context.Context, tableName string, ids []interface{}) (c
 	q := elastic.NewTermsQuery("_id", ids...)
 	rep, err := client.DeleteByQuery(tableName).Query(q).Do(ctx)
 	if err != nil {
-		fmt.Println(err.Error())
 		return 0, err
 	}
 	return rep.Deleted, err

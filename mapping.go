@@ -2,20 +2,20 @@ package ees
 
 //版本7.x
 const (
-	DEFAULT_NUM = 0
-	//type
-	TYPE = Type(DEFAULT_NUM)
-	//dynamic type
-	DYNAMIC = Dynamic(DEFAULT_NUM)
+	DefaultNum = 0
+	// type
+	Type = _type(DefaultNum)
+	// dynamic type
+	Dynamic = _dynamic(DefaultNum)
 	//index type
-	INDEX = Index(DEFAULT_NUM)
+	Index = _index(DefaultNum)
 
-	//yyyy-MM-dd HH:mm:ss
-	DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
-	//yyyy-MM-dd
-	DATE_FORMAT = "yyyy-MM-dd"
+	// yyyy-MM-dd HH:mm:ss
+	DateTimeFormat = "yyyy-MM-dd HH:mm:ss"
+	// yyyy-MM-dd
+	DateFormat = "yyyy-MM-dd"
 	//HH:mm:ss
-	TIME_FORMAT = "HH:mm:ss"
+	TimeFormat = "HH:mm:ss"
 )
 
 type Mapping struct {
@@ -42,70 +42,69 @@ func (m *Mapping) SetField(fielName string, field *Field) *Mapping {
 	return m
 }
 
-//return mappings interface{}
+// Mappings return mappings interface{}
 func (m *Mapping) Mappings() interface{} {
-
 	return map[string]Mapping{
 		"mappings": *m,
 	}
 }
 
-type Index int
+type _index int
 
-func (index Index) Enabled() bool {
+func (index _index) Enabled() bool {
 	return true
 }
-func (index Index) Disabled() bool {
+func (index _index) Disabled() bool {
 	return false
 }
 
-type Type int
+type _type int
 
-func (f Type) Long() string {
+func (f _type) Long() string {
 	return "long"
 }
 
-func (f Type) Float() string {
+func (f _type) Float() string {
 	return "float"
 }
 
 //text类型自动会分词，支持模糊搜索，使用=匹配即可
-func (f Type) Text() string {
+func (f _type) Text() string {
 	return "text"
 }
 
 //搜索完全匹配
-func (f Type) Keyword() string {
+func (f _type) Keyword() string {
 	return "keyword"
 }
 
-func (f Type) Date() string {
+func (f _type) Date() string {
 	return "date"
 }
 
-func (f Type) Boolean() string {
+func (f _type) Boolean() string {
 	return "boolean"
 }
 
-func (f Type) Geo() string {
+func (f _type) Geo() string {
 	return "geo_point"
 }
 
-func (f Type) IP() string {
+func (f _type) IP() string {
 	return "ip"
 }
 
-type Dynamic string
+type _dynamic string
 
-func (d Dynamic) True() string {
+func (d _dynamic) True() string {
 	return "true"
 }
 
-func (d Dynamic) False() string {
+func (d _dynamic) False() string {
 	return "false"
 }
 
-func (d Dynamic) Strict() string {
+func (d _dynamic) Strict() string {
 	return "strict"
 }
 
@@ -122,6 +121,7 @@ index_options对于6.0.0 中的数字字段，该参数已被弃用。
 
 	offsets    文档编号、术语频率、位置以及开始和结束字符偏移（将术语映射回原始字符串）都被编入索引。统一荧光笔使用偏移来加速突出显示。
 */
+
 type IndexOptions int
 
 func (o IndexOptions) Docs() string {
@@ -140,29 +140,14 @@ func (o IndexOptions) Offsets() string {
 	return "offsets"
 }
 
-type Analyzer int
-
-//索引时分词,最细拆分
-func (a Analyzer) IkMaxWord() string {
+// IkMaxWord  analyzer ,search_analyzer can use
+func IkMaxWord() string {
 	return "ik_max_word"
 }
 
-//搜索时分词,粗略拆分
-func (a Analyzer) IkSmart() string {
+// IkSmart  analyzer ,search_analyzer can use
+func IkSmart() string {
 	return "ik_smart"
-}
-
-//搜索阶段分词，会覆盖Analyzer的属性
-type SearchAnalyzer int
-
-//索引时分词
-func (a SearchAnalyzer) IkSmart() string {
-	return "ik_smart"
-}
-
-//索引时分词,最细拆分
-func (a SearchAnalyzer) IkMaxWord() string {
-	return "ik_max_word"
 }
 
 type Field struct {
@@ -193,7 +178,7 @@ func (f *Field) SetIndex(index bool) *Field {
 
 func (f *Field) SetFormat(fmat string) *Field {
 
-	if f.Type != TYPE.Date() {
+	if f.Type != Type.Date() {
 		panic("set format date error")
 	}
 	f.Format = fmat
