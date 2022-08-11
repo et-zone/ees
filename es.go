@@ -232,3 +232,20 @@ func GetTableDetail(ctx context.Context, tableName ...string) (map[string]interf
 	}
 	return ret, err
 }
+
+
+func IndexSetAlias(ctx context.Context,indexName,AliasName string)(bool,error){
+	r,err:=client.Alias().Add(indexName,AliasName).Do(ctx)
+	if err!=nil{
+		return false,err
+	}
+	return r.ShardsAcknowledged,err
+}
+
+func IndexDelAlias(ctx context.Context,indexName,AliasName string)(bool,error){
+	r,err:=client.Alias().Remove(indexName,AliasName).Do(ctx)
+	if err!=nil{
+		return false,err
+	}
+	return r.ShardsAcknowledged,err
+}

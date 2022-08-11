@@ -6,11 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/et-zone/ees"
-	"github.com/et-zone/sqlparser"
-	"time"
-
-	// "github.com/et-zone/etest/mock"
+	"github.com/et-zone/ees/elasticsql"
 	"github.com/olivere/elastic/v7"
+	"time"
 )
 
 var host = "http://118.195.243.63:9200"
@@ -43,7 +41,10 @@ func main() {
 	//insertAll()
 	//query()
 	//update()
+	SqlTest()
 }
+
+
 
 func delTable(){
 	//删表
@@ -327,13 +328,8 @@ dynamic属性被设置为strict时，数据写入直接出错
 */
 
 func SqlTest(){
-	sql:="select * from stu"
-	ret,err:=sqlparser.Parse(sql)
-	if err!=nil{
-		fmt.Println(err.Error())
-	}
-	re:=sqlparser.GetBindvars(ret)
+	sql:="select * from stu where id=1 and name='fff' and age=22 or sex=1 order by id desc limit 20"
 
-	fmt.Println(re)
-
+	dsl, _, _ := elasticsql.Convert(sql)
+	fmt.Println(dsl)
 }
