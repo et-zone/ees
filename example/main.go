@@ -11,15 +11,15 @@ import (
 	"time"
 )
 
-var host = "http://118.195.243.63:9200"
+var host = "http://118.195.249.105:9201"
 var table = "shop"
 
 type Result struct {
 	ID   int64    `json:"id,omitempty"`
 	NameK string   `json:"name_keyword,omitempty"`//Keyword
 	NameT string   `json:"name_text_default,omitempty"`//text
-	NameA string   `json:"name_text_analyzer,omitempty"`//text Analyzer
-	NameS string   `json:"name_text_s_analyzer,omitempty"`//text sarrch Analyzer
+	//NameA string   `json:"name_text_analyzer,omitempty"`//text Analyzer
+	//NameS string   `json:"name_text_s_analyzer,omitempty"`//text sarrch Analyzer
 	High float64  `json:"high,omitempty"`
 	TNow string   `json:"ntime,omitempty"`
 	List []string `json:"lis,omitempty"`//
@@ -40,8 +40,9 @@ func main() {
 	//delTable()
 	//insertAll()
 	//query()
+	queryKeyword()
 	//update()
-	SqlTest()
+	//SqlTest()
 }
 
 
@@ -86,9 +87,9 @@ func insertAll(){
 	for i:=0;i<10;i++{
 		nearbyObj := &Result{ //
 			ID:   211158+int64(i),
-			NameA: names[i],
+			//NameA: names[i],
 			NameK: names[i],
-			NameS: names[i],
+			//NameS: names[i],
 			NameT: names[i],
 			High: 12.30,
 			TNow: time.Now().Format("2006-01-02 15:04:05"),
@@ -110,8 +111,9 @@ func insert(){
 	nearbyObj := &Result{ //
 		ID:   211158,
 		High: 12.30,
+		NameT: "aa",
 		TNow: "2021-08-05 00:12:20",
-		List: []string{"aa", "bb", "cc"},
+		List: []string{ "bb", "cc"},
 
 	}
 
@@ -176,13 +178,13 @@ func query(){
 
 
 	// 原始sql不支持array类型的dsl，需要自己写
-	//sql := "select * from shop where lis = 'aa' limit 10"//分词 数组分词了
+	sql := "select * from shop where name_text_default = 'li' limit 10"//分词 数组分词了,全文搜索配置fields
 
 	//时间可以判断大小 ok
 	//sql := "select * from shop where ntime >= '2022-08-09 17:25:15' limit 10"//分词
 
 	// 数字大小判断 ok
-	sql := "select * from shop where high > 13 limit 10"//分词
+	//sql := "select * from shop where high > 13 limit 10"//分词
 
 	dat := &[]Result{}
 	total, err := ees.QuerySql(ctx, sql, dat)
@@ -229,6 +231,17 @@ func query(){
 	//SqlTest()
 }
 
+
+func queryKeyword(){//query more field like 全文检索
+	ctx := context.TODO()
+	r,err:=ees.Client().Search("shop").Query(elastic.NewQueryStringQuery("aa").Field("name_text_default").Field("lis")).Do(ctx)
+	if err!=nil{
+		fmt.Println(err.Error())
+	}else {
+		b,_:=json.Marshal(r.Hits.Hits)
+		fmt.Println(string(b))
+	}
+}
 // 结构化创建table
 func Test_INIT_Table() {
 	ctx := context.TODO()
@@ -236,9 +249,9 @@ func Test_INIT_Table() {
 	mapping.SetDynamic(ees.Dynamic.False())
 	mapping.SetField("id", ees.NewField().SetType(ees.Type.Long()))
 	mapping.SetField("name_keyword", ees.NewField().SetType(ees.Type.Keyword()))
-	mapping.SetField("namet_text_default", ees.NewField().SetType(ees.Type.Text()))
-	mapping.SetField("namet_text_analyzer", ees.NewField().SetType(ees.Type.Text()).SetAnalyzer(ees.IkMaxWord()))
-	mapping.SetField("namet_text_s_analyzer", ees.NewField().SetType(ees.Type.Text()).SetSearchAnalyzer(ees.IkMaxWord()))
+	mapping.SetField("name_text_default", ees.NewField().SetType(ees.Type.Text()).SetFieldsType(ees.Type.Keyword()))
+	//mapping.SetField("namet_text_analyzer", ees.NewField().SetType(ees.Type.Text()).SetAnalyzer(ees.IkMaxWord()))
+	//mapping.SetField("namet_text_s_analyzer", ees.NewField().SetType(ees.Type.Text()).SetSearchAnalyzer(ees.IkMaxWord()))
 	mapping.SetField("high", ees.NewField().SetType(ees.Type.Float()))
 	mapping.SetField("ntime", ees.NewField().SetType(ees.Type.Date()).SetFormat(ees.DateTimeFormat))
 	mapping.SetField("lis", ees.NewField().SetType(ees.Type.Text()))

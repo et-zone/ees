@@ -112,6 +112,10 @@ func queryESItem(index ...string) (rep *elastic.SearchResult, err error) {
 	return
 }
 
+func Client()*elastic.Client{
+	return client
+}
+
 // between 支持数字类型,支持指定字段查询
 func QuerySql(ctx context.Context, sql string, result interface{}) (total int64, err error) {
 	if sql == "" {
