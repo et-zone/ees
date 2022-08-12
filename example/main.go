@@ -24,6 +24,7 @@ type Result struct {
 	TNow string   `json:"ntime,omitempty"`
 	List []string `json:"lis,omitempty"`//
 }
+
 func init(){
 	//初始化es Client  -- SetSniff 集群使用
 	err := ees.InitESClient(elastic.SetURL(host), elastic.SetSniff(false))
@@ -36,11 +37,11 @@ func init(){
 func main() {
 	//Test_INIT_Table()
 	//insert()
-	//show()
+	show()
 	//delTable()
 	//insertAll()
 	//query()
-	queryKeyword()
+	//queryKeyword()
 	//update()
 	//SqlTest()
 }
@@ -249,7 +250,7 @@ func Test_INIT_Table() {
 	mapping.SetDynamic(ees.Dynamic.False())
 	mapping.SetField("id", ees.NewField().SetType(ees.Type.Long()))
 	mapping.SetField("name_keyword", ees.NewField().SetType(ees.Type.Keyword()))
-	mapping.SetField("name_text_default", ees.NewField().SetType(ees.Type.Text()).SetFieldsType(ees.Type.Keyword()))
+	mapping.SetField("name_text_default", ees.NewField().SetType(ees.Type.Text()).SetFields(ees.Type.Keyword()))
 	//mapping.SetField("namet_text_analyzer", ees.NewField().SetType(ees.Type.Text()).SetAnalyzer(ees.IkMaxWord()))
 	//mapping.SetField("namet_text_s_analyzer", ees.NewField().SetType(ees.Type.Text()).SetSearchAnalyzer(ees.IkMaxWord()))
 	mapping.SetField("high", ees.NewField().SetType(ees.Type.Float()))
