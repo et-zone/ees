@@ -11,23 +11,23 @@ import (
 	"time"
 )
 
-var host = "http://118.195.249.105:9201"
-var table = "shop"
+var host = ""
+var table = "gzy_test"
 
 type Result struct {
-	ID   int64    `json:"id,omitempty"`
-	NameK string   `json:"name_keyword,omitempty"`//Keyword
-	NameT string   `json:"name_text_default,omitempty"`//text
+	ID    int64  `json:"id,omitempty"`
+	NameK string `json:"name_keyword,omitempty"`      //Keyword
+	NameT string `json:"name_text_default,omitempty"` //text
 	//NameA string   `json:"name_text_analyzer,omitempty"`//text Analyzer
 	//NameS string   `json:"name_text_s_analyzer,omitempty"`//text sarrch Analyzer
 	High float64  `json:"high,omitempty"`
 	TNow string   `json:"ntime,omitempty"`
-	List []string `json:"lis,omitempty"`//
+	List []string `json:"lis,omitempty"` //
 }
 
-func init(){
+func Init() {
 	//初始化es Client  -- SetSniff 集群使用
-	err := ees.InitESClient(elastic.SetURL(host), elastic.SetSniff(false))
+	err := ees.InitESClient(elastic.SetURL(host), elastic.SetSniff(false), elastic.SetBasicAuth("", ""))
 	if err != nil {
 		fmt.Printf("create es client failed | err : %s\n", err)
 		panic(err)
@@ -37,7 +37,7 @@ func init(){
 func main() {
 	//Test_INIT_Table()
 	//insert()
-	show()
+	//show()
 	//delTable()
 	//insertAll()
 	//query()
@@ -46,9 +46,7 @@ func main() {
 	//SqlTest()
 }
 
-
-
-func delTable(){
+func delTable() {
 	//删表
 	ctx := context.TODO()
 	delRep, err := ees.DelTable(ctx, table)
@@ -59,9 +57,8 @@ func delTable(){
 	fmt.Printf("%+v\n", delRep)
 }
 
-
-func insertAll(){
-	names:=[]string{
+func insertAll() {
+	names := []string{
 		"zhang san",
 		"li si",
 		"wang wu",
@@ -72,12 +69,12 @@ func insertAll(){
 		"yang mi",
 		"sun qi",
 		"guo"}
-	lists:=[][]string{
+	lists := [][]string{
 		[]string{"aa"},
-		[]string{"aa","bb"},
+		[]string{"aa", "bb"},
 		[]string{"cc"},
 		[]string{"bb"},
-		[]string{"aa","cc"},
+		[]string{"aa", "cc"},
 		[]string{"cc"},
 		[]string{"dd"},
 		[]string{"ee"},
@@ -85,37 +82,36 @@ func insertAll(){
 		[]string{}}
 	ctx := context.TODO()
 
-	for i:=0;i<10;i++{
+	for i := 0; i < 10; i++ {
 		nearbyObj := &Result{ //
-			ID:   211158+int64(i),
+			ID: 211158 + int64(i),
 			//NameA: names[i],
 			NameK: names[i],
 			//NameS: names[i],
 			NameT: names[i],
-			High: 12.30,
-			TNow: time.Now().Format("2006-01-02 15:04:05"),
-			List: lists[i],
+			High:  12.30,
+			TNow:  time.Now().Format("2006-01-02 15:04:05"),
+			List:  lists[i],
 		}
 		_, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", nearbyObj.ID), nearbyObj)
 
 		if err != nil {
 			fmt.Printf("failed | err : %s\n", err)
 		}
-		if i==3||i==7{
+		if i == 3 || i == 7 {
 			time.Sleep(time.Second)
 		}
 	}
 
 }
-func insert(){
+func insert() {
 	ctx := context.TODO()
 	nearbyObj := &Result{ //
-		ID:   211158,
-		High: 12.30,
+		ID:    211158,
+		High:  12.30,
 		NameT: "aa",
-		TNow: "2021-08-05 00:12:20",
-		List: []string{ "bb", "cc"},
-
+		TNow:  "2021-08-05 00:12:20",
+		List:  []string{"bb", "cc"},
 	}
 
 	isok, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", nearbyObj.ID), nearbyObj)
@@ -127,7 +123,7 @@ func insert(){
 	fmt.Println(isok)
 }
 
-func update(){
+func update() {
 	//update one field
 
 	//func 1
@@ -139,7 +135,7 @@ func update(){
 
 	//func 2
 	isok, err := ees.UpsertOneESData(ctx, table, fmt.Sprintf("%v", 211158), map[string]interface{}{
-		"high":22,
+		"high": 22,
 	})
 
 	if err != nil {
@@ -148,12 +144,9 @@ func update(){
 	}
 	fmt.Println(isok)
 
-
 }
 
-
-
-func show(){
+func show() {
 	//	查看
 	ctx := context.TODO()
 	mp, err := ees.GetTableDetail(ctx, table)
@@ -164,10 +157,9 @@ func show(){
 	fmt.Println(string(c))
 }
 
-func query(){
+func query() {
 	//***********ADD ALL************
 	ctx := context.TODO()
-
 
 	//***********Select ALL************
 	//sql查询
@@ -177,9 +169,9 @@ func query(){
 	//sql := "select * from shop where name_text_analyzer='dong' limit 10"//分词
 	//sql := "select * from shop where name_text_s_analyzer='li' limit 10"//分词
 
-
 	// 原始sql不支持array类型的dsl，需要自己写
-	sql := "select * from shop where name_text_default = 'li' limit 10"//分词 数组分词了,全文搜索配置fields
+	//sql := "select * from shop where name_text_default = 'li' limit 10"//分词 数组分词了,全文搜索配置fields
+	sql := "select id from test_gzy " //分词 数组分词了,全文搜索配置fields
 
 	//时间可以判断大小 ok
 	//sql := "select * from shop where ntime >= '2022-08-09 17:25:15' limit 10"//分词
@@ -193,7 +185,8 @@ func query(){
 		fmt.Printf("search es data failed | err : %s\n", err)
 		return
 	}
-	fmt.Println("total =",total)
+	return
+	fmt.Println("total =", total)
 
 	//for _, d := range *dat {
 	//	b, _ := json.Marshal(d)
@@ -218,8 +211,6 @@ func query(){
 	// }
 	// fmt.Printf("%+v\n", delRep)
 
-
-
 	//mp, err := ees.GetTableDetail(ctx, table)
 	//if err != nil {
 	//	fmt.Println(err.Error())
@@ -232,34 +223,31 @@ func query(){
 	//SqlTest()
 }
 
-
-func queryKeyword(){//query more field like 全文检索
+func queryKeyword() { //query more field like 全文检索
 	ctx := context.TODO()
-	r,err:=ees.Client().Search("shop").Query(elastic.NewQueryStringQuery("aa").Field("name_text_default").Field("lis")).Do(ctx)
-	if err!=nil{
+	r, err := ees.Client().Search("shop").Query(elastic.NewQueryStringQuery("aa").Field("name_text_default").Field("lis")).Do(ctx)
+	if err != nil {
 		fmt.Println(err.Error())
-	}else {
-		b,_:=json.Marshal(r.Hits.Hits)
+	} else {
+		b, _ := json.Marshal(r.Hits.Hits)
 		fmt.Println(string(b))
 	}
 }
+
 // 结构化创建table
 func Test_INIT_Table() {
 	ctx := context.TODO()
 	mapping := ees.NewMapping()
 	mapping.SetDynamic(ees.Dynamic.False())
 	mapping.SetField("id", ees.NewField().SetType(ees.Type.Long()))
-	mapping.SetField("name_keyword", ees.NewField().SetType(ees.Type.Keyword()))
-	mapping.SetField("name_text_default", ees.NewField().SetType(ees.Type.Text()).SetFields(ees.Type.Keyword()))
-	//mapping.SetField("namet_text_analyzer", ees.NewField().SetType(ees.Type.Text()).SetAnalyzer(ees.IkMaxWord()))
-	//mapping.SetField("namet_text_s_analyzer", ees.NewField().SetType(ees.Type.Text()).SetSearchAnalyzer(ees.IkMaxWord()))
+	mapping.SetField("name", ees.NewField().SetType(ees.Type.Text()).SetSearchAnalyzer(ees.IkMaxWord()))
 	mapping.SetField("high", ees.NewField().SetType(ees.Type.Float()))
 	mapping.SetField("ntime", ees.NewField().SetType(ees.Type.Date()).SetFormat(ees.DateTimeFormat))
-	mapping.SetField("lis", ees.NewField().SetType(ees.Type.Text()))
-
+	mapping.SetField("obj", ees.NewField().SetType(ees.Type.Object()))
 
 	b, _ := json.Marshal(mapping.Mappings())
 	fmt.Println("mapping===", string(b))
+	return
 	isok, err := ees.InitTable(ctx, table, mapping.Mappings())
 	if err != nil {
 		fmt.Println("===1===", err.Error())
@@ -341,8 +329,8 @@ dynamic属性被设置为strict时，数据写入直接出错
 
 */
 
-func SqlTest(){
-	sql:="select * from stu where id=1 and name='fff' and age=22 or sex=1 order by id desc limit 20"
+func SqlTest() {
+	sql := "select * from stu where id=1 and name='fff' and age=22 or sex=1 order by id desc limit 20"
 
 	dsl, _, _ := elasticsql.Convert(sql)
 	fmt.Println(dsl)

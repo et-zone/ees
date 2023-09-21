@@ -72,7 +72,6 @@ func UpsertOneESData(ctx context.Context, table string, id string, value interfa
 	return true, err
 }
 
-
 // values key is id
 func UpsertAllESData(ctx context.Context, table string, values map[string]interface{}) (int64, error) {
 	docs := []elastic.BulkableRequest{}
@@ -88,14 +87,14 @@ func UpsertAllESData(ctx context.Context, table string, values map[string]interf
 	}
 
 	if rep != nil && rep.Errors {
-		e, _ := json.Marshal(rep.Items[0]["update"].Error)
+		e, _ := json.Marshal(rep)
 		return 0, errors.New(string(e))
 	}
 	return int64(len(rep.Items)), err
 }
 
 // get data
-func getESItem(index ,id string) (rep *elastic.GetResult, err error) {
+func getESItem(index, id string) (rep *elastic.GetResult, err error) {
 	rep, err = client.Get().
 		Index(index).
 		Id(id).
@@ -112,7 +111,7 @@ func queryESItem(index ...string) (rep *elastic.SearchResult, err error) {
 	return
 }
 
-func Client()*elastic.Client{
+func Client() *elastic.Client {
 	return client
 }
 
@@ -137,7 +136,12 @@ func QuerySql(ctx context.Context, sql string, result interface{}) (total int64,
 
 	if v.IsNil() {
 		//return 0,errors.New("out []interface{} is nil ")
-		return rep.Hits.TotalHits.Value, nil
+		return 0, errors.New("result can not nil")
+	}
+
+	if v.Kind() != reflect.Ptr {
+		//return 0,errors.New("out []interface{} is nil ")
+		return 0, errors.New("result must a addr of Slice")
 	}
 
 	len := len(rep.Hits.Hits)
@@ -237,19 +241,26 @@ func GetTableDetail(ctx context.Context, tableName ...string) (map[string]interf
 	return ret, err
 }
 
-
-func IndexSetAlias(ctx context.Context,indexName,AliasName string)(bool,error){
-	r,err:=client.Alias().Add(indexName,AliasName).Do(ctx)
-	if err!=nil{
-		return false,err
+func IndexSetAlias(ctx context.Context, indexName, AliasName string) (bool, error) {
+	r, err := client.Alias().Add(indexName, AliasName).Do(ctx)
+	if err != nil {
+		return false, err
 	}
-	return r.ShardsAcknowledged,err
+	return r.ShardsAcknowledged, err
 }
 
-func IndexDelAlias(ctx context.Context,indexName,AliasName string)(bool,error){
-	r,err:=client.Alias().Remove(indexName,AliasName).Do(ctx)
-	if err!=nil{
-		return false,err
+func IndexDelAlias(ctx context.Context, indexName, AliasName string) (bool, error) {
+	r, err := client.Alias().Remove(indexName, AliasName).Do(ctx)
+	if err != nil {
+		return false, err
 	}
-	return r.ShardsAcknowledged,err
+	return r.ShardsAcknowledged, err
+}
+
+func Count(ctx context.Context, indexName, AliasName string) (bool, error) {
+	r, err := client.Alias().Remove(indexName, AliasName).Do(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.ShardsAcknowledged, err
 }

@@ -101,3 +101,8 @@ func (d _dynamic) Strict() string {
 	return "strict"
 }
 
+//object type json string
+func (f _type) Object() string {
+	//类型自动会分词，支持模糊搜索，使用=匹配即可
+	return "object"
+}
