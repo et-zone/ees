@@ -85,7 +85,7 @@ func (e *Eelastic) QuerySql(ctx context.Context, sql string, result interface{})
 	return 0, err
 }
 
-func (e *Eelastic) Query(ctx context.Context, query *EQueryReq) (*elastic.SearchResult, error) {
+func (e *Eelastic) Search(ctx context.Context, query *EQueryReq) (*elastic.SearchResult, error) {
 	cli := e.client.Search(query.Index...).Query(query.Query.query)
 	for k, v := range query.aggregationMap {
 		cli = cli.Aggregation(k, v)
@@ -122,4 +122,38 @@ func (e *Eelastic) GetIndexDetail(ctx context.Context, index ...string) (map[str
 		return nil, err
 	}
 	return ret, err
+}
+
+// if version =8.*  some version can not use it to search
+func (e *Eelastic) MultiSearch(ctx context.Context, req MultiQueryReq) (*elastic.MultiSearchResult, error) {
+	//index:=reqList.Index
+	list := []*elastic.SearchRequest{}
+	for _, v := range req.Req {
+		request := e.getSearchRequest(v)
+		list = append(list, request)
+	}
+	return e.client.MultiSearch().Index(req.Index).Add(list...).Pretty(true).Do(ctx)
+}
+
+func (e *Eelastic) getSearchRequest(query *EQueryReq) *elastic.SearchRequest {
+
+	request := elastic.NewSearchRequest().
+		Index(query.Index...).
+		Query(query.Query.query).
+		SortBy(query.sort...).
+		From(query.from).
+		Size(query.size)
+	for name, aggregation := range query.aggregationMap {
+		if name != "" {
+			request = request.Aggregation(name, aggregation)
+		}
+	}
+
+	if query.fetchSourceContext != nil {
+		request = request.FetchSourceContext(query.fetchSourceContext)
+	}
+	if query.collapseField != "" {
+		request = request.Collapse(elastic.NewCollapseBuilder(query.collapseField))
+	}
+	return request
 }

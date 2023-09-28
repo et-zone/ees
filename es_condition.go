@@ -47,6 +47,14 @@ func (e *EQueryReq) SetAggregation(aliseName string, fieldName string) *EQueryRe
 	return e
 }
 
+func (e *EQueryReq) SetAggregationOpt(aliseName string, aggregation elastic.Aggregation) *EQueryReq {
+	if aliseName == "" {
+		return e
+	}
+	e.aggregationMap[aliseName] = aggregation
+	return e
+}
+
 func (e *EQueryReq) SetPage(pageNo, pageSize int) *EQueryReq {
 	e.from = (pageNo - 1) * pageSize
 	e.size = pageSize
@@ -94,6 +102,12 @@ func (e *EQueryReq) SetCollapseField(collapseField string) *EQueryReq {
 func (e *EQueryReq) SetSort(sortField ...elastic.Sorter) *EQueryReq {
 	e.sort = append(e.sort, sortField...)
 	return e
+}
+
+//Mult Query
+type MultiQueryReq struct {
+	Index string       `json:"index"`
+	Req   []*EQueryReq `json:"req"`
 }
 
 type Query struct {
