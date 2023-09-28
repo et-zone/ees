@@ -1,4 +1,4 @@
-package es
+package ees
 
 import (
 	"context"
@@ -10,8 +10,12 @@ import (
 	"strings"
 )
 
-func Count(ctx context.Context, indexName ...string) (int64, error) {
-	count, err := client.Count(indexName...).Do(ctx)
+type Eelastic struct {
+	client *elastic.Client
+}
+
+func (e *Eelastic) Count(ctx context.Context, indexName ...string) (int64, error) {
+	count, err := e.client.Count(indexName...).Do(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -19,7 +23,7 @@ func Count(ctx context.Context, indexName ...string) (int64, error) {
 }
 
 // between 支持数字类型,支持指定字段查询
-func QuerySql(ctx context.Context, sql string, result interface{}) (total int64, err error) {
+func (e *Eelastic) QuerySql(ctx context.Context, sql string, result interface{}) (total int64, err error) {
 	if sql == "" {
 		return 0, errors.New("sql is ''")
 	}
@@ -30,7 +34,7 @@ func QuerySql(ctx context.Context, sql string, result interface{}) (total int64,
 	if err != nil {
 		return 0, err
 	}
-	rep, err := client.Search(table).Source(dsl).Do(ctx)
+	rep, err := e.client.Search(table).Source(dsl).Do(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -81,36 +85,36 @@ func QuerySql(ctx context.Context, sql string, result interface{}) (total int64,
 	return 0, err
 }
 
-func Query(ctx context.Context, query EQueryReq) (*elastic.SearchResult, error) {
-	cli := client.Search(query.Index...).Query(query.Query)
-	for k, v := range query.AggregationMap {
+func (e *Eelastic) Query(ctx context.Context, query *EQueryReq) (*elastic.SearchResult, error) {
+	cli := e.client.Search(query.Index...).Query(query.Query.query)
+	for k, v := range query.aggregationMap {
 		cli = cli.Aggregation(k, v)
 	}
 
-	if query.FetchSourceContext != nil {
-		cli = cli.FetchSourceContext(query.FetchSourceContext)
+	if query.fetchSourceContext != nil {
+		cli = cli.FetchSourceContext(query.fetchSourceContext)
 	}
-	if query.CollapseField != "" {
-		cli = cli.Collapse(elastic.NewCollapseBuilder(query.CollapseField))
+	if query.collapseField != "" {
+		cli = cli.Collapse(elastic.NewCollapseBuilder(query.collapseField))
 	}
 
-	return cli.SortBy(query.Sort...).From(query.From).Size(query.Size).Pretty(true).Do(ctx)
+	return cli.SortBy(query.sort...).From(query.from).Size(query.size).Pretty(true).Do(ctx)
 }
 
-func QueryAggregations(ctx context.Context, query EQueryReq) (*elastic.SearchResult, error) {
-	cli := client.Search(query.Index...).Query(query.Query).From(0).Size(0)
-	for k, v := range query.AggregationMap {
+func (e *Eelastic) QueryAggregations(ctx context.Context, query *EQueryReq) (*elastic.SearchResult, error) {
+	cli := e.client.Search(query.Index...).Query(query.Query.query).From(0).Size(0)
+	for k, v := range query.aggregationMap {
 		cli = cli.Aggregation(k, v)
 	}
 	return cli.Pretty(true).Do(ctx)
 }
 
-func GetIndexDetail(ctx context.Context, index ...string) (map[string]interface{}, error) {
+func (e *Eelastic) GetIndexDetail(ctx context.Context, index ...string) (map[string]interface{}, error) {
 	//GetMaping
 	if len(index) == 0 {
 		return nil, nil
 	}
-	ret, err := client.GetMapping().Index(index...).Do(ctx)
+	ret, err := e.client.GetMapping().Index(index...).Pretty(true).Do(ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), "Not Found") {
 			return nil, nil

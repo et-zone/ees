@@ -1,4 +1,4 @@
-package es
+package ees
 
 //版本7.x
 import (
@@ -19,45 +19,48 @@ const (
 	DefaultLimit = "1000"
 )
 
-var client *elastic.Client
-
-func stop() {
-	client.Stop()
-}
-
 // init client
-func InitESClient(opts ...elastic.ClientOptionFunc) (err error) {
+func NewClient(opts ...elastic.ClientOptionFunc) (client *Eelastic, err error) {
 	//client, err = elastic.NewClient(
 	//	elastic.SetURL(host),elastic.SetSniff(false),
 	//)
-	client, err = elastic.NewClient(opts...)
+	opts = append(opts, elastic.SetTraceLog(new(tracelog)))
+	cli, err := elastic.NewClient(opts...)
 	if err != nil {
-		return errors.New(fmt.Sprintf("can't connect to elasticsearch | err : %s \n", err))
+		return nil, errors.New(fmt.Sprintf("can't connect to elasticsearch | err : %s \n", err))
 	}
 
 	log.Println("connect to elasticsearch success")
-	return
+
+	return &Eelastic{client: cli}, nil
+}
+
+type tracelog struct{}
+
+//实现输出
+func (tracelog) Printf(format string, v ...interface{}) {
+	fmt.Printf(format, v...)
 }
 
 //Here we think table = index, all _type = default("_doc")
-func InitTable(ctx context.Context, index string, mappings interface{}) (bool, error) {
+func (e *Eelastic) InitTable(ctx context.Context, index string, mappings interface{}) (bool, error) {
 	//_type default = "_doc"
 
-	isExit, _ := client.IndexExists(index).Do(ctx)
+	isExit, _ := e.client.IndexExists(index).Do(ctx)
 	if isExit {
 		return true, nil
 	}
 
-	rep, err := client.CreateIndex(index).BodyJson(mappings).Do(ctx)
+	rep, err := e.client.CreateIndex(index).BodyJson(mappings).Do(ctx)
 	if err != nil {
 		return false, err
 	}
 	return rep.ShardsAcknowledged, err
 }
 
-func UpsertOne(ctx context.Context, index string, id string, value interface{}) (isok bool, err error) {
+func (e *Eelastic) UpsertOne(ctx context.Context, index string, id string, value interface{}) (isok bool, err error) {
 	doc := elastic.NewBulkUpdateRequest().Index(index).Id(id).Doc(value).DocAsUpsert(true)
-	bulk := client.Bulk()
+	bulk := e.client.Bulk()
 	rep, err := bulk.Add(doc).Do(ctx)
 
 	res := rep.Items[0]
@@ -69,13 +72,13 @@ func UpsertOne(ctx context.Context, index string, id string, value interface{}) 
 }
 
 // values key is id
-func UpsertAll(ctx context.Context, index string, values map[string]interface{}) (int64, error) {
+func (e *Eelastic) UpsertAll(ctx context.Context, index string, values map[string]interface{}) (int64, error) {
 	docs := []elastic.BulkableRequest{}
 	for k, v := range values {
 		doc := elastic.NewBulkUpdateRequest().Index(index).Id(k).Doc(v).DocAsUpsert(true)
 		docs = append(docs, doc)
 	}
-	bulk := client.Bulk()
+	bulk := e.client.Bulk()
 	rep, err := bulk.Add(docs...).Do(ctx)
 
 	if err != nil {
@@ -90,24 +93,24 @@ func UpsertAll(ctx context.Context, index string, values map[string]interface{})
 }
 
 // get data
-func GetItemByID(index string, id interface{}) (rep *elastic.GetResult, err error) {
-	rep, err = client.Get().
+func (e *Eelastic) GetItemByID(index string, id interface{}) (rep *elastic.GetResult, err error) {
+	rep, err = e.client.Get().
 		Index(index).
 		Id(fmt.Sprintf("%v", id)).
 		Do(context.Background())
 	return
 }
 
-func Client() *elastic.Client {
-	return client
+func (e *Eelastic) Client() *elastic.Client {
+	return e.client
 }
 
 //删除数据
-func DelItemByID(ctx context.Context, index string, id string) (isDel bool, err error) {
+func (e *Eelastic) DelItemByID(ctx context.Context, index string, id string) (isDel bool, err error) {
 	if index == "" || id == "" {
 		return false, errors.New("table or id not null")
 	}
-	rep, err := client.Delete().
+	rep, err := e.client.Delete().
 		Index(index).
 		Id(fmt.Sprintf("%v", id)).
 		//Refresh("wait_for").
@@ -120,7 +123,7 @@ func DelItemByID(ctx context.Context, index string, id string) (isDel bool, err 
 }
 
 //ids can int or string
-func DelItemByIDs(ctx context.Context, index string, ids ...interface{}) (count int64, err error) {
+func (e *Eelastic) DelItemByIDs(ctx context.Context, index string, ids ...interface{}) (count int64, err error) {
 	if index == "" {
 		return 0, errors.New("table not null")
 	}
@@ -129,7 +132,7 @@ func DelItemByIDs(ctx context.Context, index string, ids ...interface{}) (count 
 	}
 	//t := time.Now()
 	q := elastic.NewTermsQuery("_id", ids...)
-	rep, err := client.DeleteByQuery(index).Query(q).Do(ctx)
+	rep, err := e.client.DeleteByQuery(index).Query(q).Do(ctx)
 	//fmt.Println("======", time.Since(t))
 	if err != nil {
 		return 0, err
@@ -138,11 +141,11 @@ func DelItemByIDs(ctx context.Context, index string, ids ...interface{}) (count 
 
 }
 
-func DelTable(ctx context.Context, index string) (isok bool, err error) {
+func (e *Eelastic) DelTable(ctx context.Context, index string) (isok bool, err error) {
 	if index == "" {
 		return false, errors.New("table not null")
 	}
-	rep, err := client.DeleteIndex(index).Do(ctx)
+	rep, err := e.client.DeleteIndex(index).Do(ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), "Not Found") {
 			return true, nil
@@ -153,16 +156,16 @@ func DelTable(ctx context.Context, index string) (isok bool, err error) {
 
 }
 
-func SetIndexAlias(ctx context.Context, index, AliasName string) (bool, error) {
-	r, err := client.Alias().Add(index, AliasName).Do(ctx)
+func (e *Eelastic) SetIndexAlias(ctx context.Context, index, AliasName string) (bool, error) {
+	r, err := e.client.Alias().Add(index, AliasName).Do(ctx)
 	if err != nil {
 		return false, err
 	}
 	return r.ShardsAcknowledged, err
 }
 
-func DelIndexAlias(ctx context.Context, index, AliasName string) (bool, error) {
-	r, err := client.Alias().Remove(index, AliasName).Do(ctx)
+func (e *Eelastic) DelIndexAlias(ctx context.Context, index, AliasName string) (bool, error) {
+	r, err := e.client.Alias().Remove(index, AliasName).Do(ctx)
 	if err != nil {
 		return false, err
 	}

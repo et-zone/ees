@@ -6,8 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/et-zone/ees/elasticsql"
-	"github.com/et-zone/ees/es"
-	"github.com/olivere/elastic/v7"
+
 	"testing"
 )
 
@@ -29,16 +28,6 @@ func TestShowCount(t *testing.T) {
 	fmt.Println(err)
 	fmt.Println(mp)
 
-}
-func queryKeyword() { //query more field like 全文检索
-	ctx := context.TODO()
-	r, err := es.Client().Search("shop").Query(elastic.NewQueryStringQuery("aa").Field("name_text_default").Field("lis")).Do(ctx)
-	if err != nil {
-		fmt.Println(err.Error())
-	} else {
-		b, _ := json.Marshal(r.Hits.Hits)
-		fmt.Println(string(b))
-	}
 }
 
 /*

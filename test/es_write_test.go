@@ -4,20 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/et-zone/ees/es"
+	"github.com/et-zone/ees"
 	"github.com/olivere/elastic/v7"
 	"strconv"
 	"testing"
 	"time"
 )
 
-//var host = "http://192.168.1.124:9200"
-var host = "https://dev-elastic.carsome.dev"
-var table = "lo_test"
-var uname = "elastic"
+var host = "http://192.168.1.124:9200"
 
-//var pwd = "Carsome123"
-var pwd = "s6G74t5hww202p1QETAH20ab"
+//var host = "https://dev-elastic.carsome.dev"
+var table = "my_inventory_car_index_test-242"
+var uname = "elastic"
+var pwd = "Carsome123"
+
+//var pwd = "s6G74t5hww202p1QETAH20ab"
+var es *ees.Eelastic
 
 type Result struct {
 	ID    int64  `json:"id,omitempty"`
@@ -137,13 +139,13 @@ func TestUpdate(t *testing.T) {
 func TestInitTable(t *testing.T) {
 	//支持7.*
 	ctx := context.TODO()
-	mapping := es.NewMapping()
-	mapping.SetDynamic(es.Dynamic.False())
-	mapping.SetField("id", es.NewField().SetType(es.Type.Long()))
-	mapping.SetField("name", es.NewField().SetType(es.Type.Text()).SetSearchAnalyzer(es.IkMaxWord()))
-	mapping.SetField("high", es.NewField().SetType(es.Type.Float()))
-	mapping.SetField("ntime", es.NewField().SetType(es.Type.Date()).SetFormat(es.DateTimeFormat))
-	mapping.SetField("obj", es.NewField().SetType(es.Type.Object()))
+	mapping := ees.NewMapping()
+	mapping.SetDynamic(ees.Dynamic.False())
+	mapping.SetField("id", ees.NewField().SetType(ees.Type.Long()))
+	mapping.SetField("name", ees.NewField().SetType(ees.Type.Text()).SetSearchAnalyzer(ees.IkMaxWord()))
+	mapping.SetField("high", ees.NewField().SetType(ees.Type.Float()))
+	mapping.SetField("ntime", ees.NewField().SetType(ees.Type.Date()).SetFormat(ees.DateTimeFormat))
+	mapping.SetField("obj", ees.NewField().SetType(ees.Type.Object()))
 
 	b, _ := json.Marshal(mapping.Mappings())
 	fmt.Println("mapping===", string(b))
@@ -166,11 +168,12 @@ func TestInitTable(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	//初始化es Client  -- SetSniff 集群使用
-	err := es.InitESClient(elastic.SetURL(host), elastic.SetSniff(false), elastic.SetBasicAuth(uname, pwd))
+	cli, err := ees.NewClient(elastic.SetURL(host), elastic.SetSniff(false), elastic.SetBasicAuth(uname, pwd))
 	if err != nil {
 		fmt.Printf("create es client failed | err : %s\n", err)
 		panic(err)
 		return
 	}
+	es = cli
 	m.Run()
 }

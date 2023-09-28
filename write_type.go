@@ -1,4 +1,4 @@
-package es
+package ees
 
 type Fields struct {
 	Type  string `json:"type"`
