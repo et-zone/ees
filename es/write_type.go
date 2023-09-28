@@ -82,3 +82,210 @@ func (f *Field) SetSearchAnalyzer(s string) *Field {
 	f.SearchAnalyzer = s
 	return f
 }
+
+// ---- ---- ---- ---- ---- ---- ----
+
+type _index int
+
+func (index _index) Enabled() bool {
+	return true
+}
+func (index _index) Disabled() bool {
+	return false
+}
+
+type _type int
+
+//number  64 byte int
+func (f _type) Long() string {
+	return "long"
+}
+
+//number 32 byte float
+func (f _type) Float() string {
+	return "float"
+}
+
+//number 32 byte int
+func (f _type) Int() string {
+	return "integer"
+}
+
+//number 16 byte int
+func (f _type) Short() string {
+	return "short"
+}
+
+//number 1byte
+func (f _type) Byte() string {
+	return "byte"
+}
+
+//number  64 byte ,float
+func (f _type) Double() string {
+	return "double"
+}
+
+//text type
+func (f _type) Text() string {
+	//类型自动会分词，支持模糊搜索，使用=匹配即可
+	return "text"
+}
+
+//text type
+func (f _type) TextMatchOnlyText() string {
+	return "match_only_text"
+}
+
+// Keyword 搜索完全匹配
+func (f _type) Keyword() string {
+	return "keyword"
+}
+
+//Keyword
+func (f _type) KeywordConstantKeyword() string {
+	return "constant_keyword"
+}
+
+//Keyword
+func (f _type) KeywordWildcard() string {
+	return "wildcard"
+}
+
+//date type
+func (f _type) Date() string {
+	return "date"
+}
+
+func (f _type) Boolean() string {
+	return "boolean"
+}
+
+func (f _type) Geo() string {
+	return "geo_point"
+}
+
+func (f _type) IP() string {
+	return "ip"
+}
+
+type _dynamic string
+
+func (d _dynamic) True() string {
+	return "true"
+}
+
+func (d _dynamic) False() string {
+	return "false"
+}
+
+func (d _dynamic) Strict() string {
+	return "strict"
+}
+
+//object type json string
+func (f _type) Object() string {
+	//类型自动会分词，支持模糊搜索，使用=匹配即可
+	return "object"
+}
+
+// -------------------- map ----------------------
+
+//版本7.x
+const (
+	DefaultNum = 0
+	// type
+	Type = _type(DefaultNum)
+	// dynamic type
+	Dynamic = _dynamic(DefaultNum)
+	//index type
+	Index = _index(DefaultNum)
+
+	// yyyy-MM-dd HH:mm:ss
+	DateTimeFormat = "yyyy-MM-dd HH:mm:ss"
+	// yyyy-MM-dd
+	DateFormat = "yyyy-MM-dd"
+	//HH:mm:ss
+	TimeFormat = "HH:mm:ss"
+	row        = "row"
+	BoolTrue   = true
+	BoolFalse  = false
+)
+
+type Mapping struct {
+	Dynamic string           `json:"dynamic,omitempty"` //default true
+	Fields  map[string]Field `json:"properties"`
+}
+
+func NewMapping() *Mapping {
+	return &Mapping{
+		Fields: map[string]Field{},
+	}
+}
+
+func (m *Mapping) SetDynamic(dynamic string) *Mapping {
+	m.Dynamic = dynamic
+	return m
+}
+
+func (m *Mapping) SetField(fielName string, field *Field) *Mapping {
+	if fielName == "" {
+		return m
+	}
+	m.Fields[fielName] = *field
+	return m
+}
+
+// Mappings return mappings interface{}
+func (m *Mapping) Mappings() interface{} {
+	return map[string]Mapping{
+		"mappings": *m,
+	}
+}
+
+type IndexOptions int
+
+func (o IndexOptions) Docs() string {
+	return "docs"
+}
+
+func (o IndexOptions) Freqs() string {
+	return "freqs"
+}
+
+func (o IndexOptions) Positions() string {
+	return "positions"
+}
+
+func (o IndexOptions) Offsets() string {
+	return "offsets"
+}
+
+// IkMaxWord  analyzer ,search_analyzer can use
+func IkMaxWord() string {
+	return "ik_max_word"
+}
+
+// IkSmart  analyzer ,search_analyzer can use
+func IkSmart() string {
+	return "ik_smart"
+}
+
+type Geo struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
+}
+
+/*
+index_options对于6.0.0 中的数字字段，该参数已被弃用。
+
+该index_options参数控制将哪些信息添加到倒排索引中，以用于搜索和突出显示目的。
+它接受以下设置：
+	docs  只有文档编号被索引。可以回答这个问题这个词是否存在于这个领域？
+
+	freqs   文档编号和术语频率已编入索引。术语频率用于对重复术语的评分高于单个术语。
+
+	positions   文档编号、术语频率和术语位置（或顺序）被编入索引。位置可用于 邻近或短语查询。
+
+	offsets    文档编号、术语频率、位置以及开始和结束字符偏移（将术语映射回原始字符串）都被编入索引。统一荧光笔使用偏移来加速突出显示。
+*/

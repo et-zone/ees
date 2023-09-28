@@ -11,9 +11,12 @@ import (
 	"time"
 )
 
+//var host = "http://192.168.1.124:9200"
 var host = "https://dev-elastic.carsome.dev"
 var table = "lo_test"
 var uname = "elastic"
+
+//var pwd = "Carsome123"
 var pwd = "s6G74t5hww202p1QETAH20ab"
 
 type Result struct {
@@ -33,16 +36,16 @@ func TestInsertAll(t *testing.T) {
 	ctx := context.TODO()
 
 	data := map[string]interface{}{}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 200; i++ {
 		nearbyObj := &Result{ //
-			ID: 211158 + int64(i),
+			ID: 1 + int64(i),
 			//NameA: names[i],
-			NameK: names[i],
+			NameK: names[1],
 			//NameS: names[i],
-			NameT: names[i],
+			NameT: names[1],
 			High:  12.30,
 			TNow:  time.Now().Format("2006-01-02 15:04:05"),
-			List:  lists[i],
+			List:  lists[1],
 		}
 		data[fmt.Sprintf("%v", nearbyObj.ID)] = nearbyObj
 	}
@@ -84,13 +87,28 @@ func TestDelOneByID(t *testing.T) {
 func TestDelOneByIDs(t *testing.T) {
 	//删表
 	ctx := context.TODO()
-	delRep, err := es.DelItemByIDs(ctx, table, strconv.Itoa(211159), strconv.Itoa(211160))
+	delRep, err := es.DelItemByIDs(ctx, table, strconv.Itoa(211167), strconv.Itoa(211166))
 	if err != nil {
 		fmt.Printf("delete es data failed | err : %s\n", err)
 		return
 	}
 	fmt.Println(err)
 	fmt.Printf("%+v\n", delRep)
+}
+
+func TestDelOneByIDlist(t *testing.T) {
+	//删表
+	ctx := context.TODO()
+	for i := 0; i < 200; i++ {
+		t := time.Now()
+		_, err := es.DelItemByIDs(ctx, table, strconv.Itoa(1+i))
+		if err != nil {
+			fmt.Printf("delete es data failed | err : %s\n", err)
+			return
+		}
+		fmt.Println(time.Since(t))
+	}
+
 }
 
 func TestDelTable(t *testing.T) {
@@ -138,7 +156,7 @@ func TestInitTable(t *testing.T) {
 	}
 
 	//	查看
-	mp, err := es.GetTableDetail(ctx, table)
+	mp, err := es.GetIndexDetail(ctx, table)
 
 	fmt.Println(err)
 	c, _ := json.Marshal(mp)

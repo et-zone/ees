@@ -6,11 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/olivere/elastic/v7"
 	"log"
 	"strings"
-	"time"
-
-	"github.com/olivere/elastic/v7"
 )
 
 const (
@@ -109,9 +107,10 @@ func DelItemByID(ctx context.Context, index string, id string) (isDel bool, err 
 	if index == "" || id == "" {
 		return false, errors.New("table or id not null")
 	}
-	rep, err := client.Delete().Refresh("wait_for").
+	rep, err := client.Delete().
 		Index(index).
 		Id(fmt.Sprintf("%v", id)).
+		//Refresh("wait_for").
 		Do(ctx)
 
 	if rep != nil && rep.Result == DeleteSucc {
@@ -128,10 +127,10 @@ func DelItemByIDs(ctx context.Context, index string, ids ...interface{}) (count 
 	if len(ids) == 0 {
 		return 0, errors.New("ids not null")
 	}
-	t := time.Now()
+	//t := time.Now()
 	q := elastic.NewTermsQuery("_id", ids...)
-	rep, err := client.DeleteByQuery(index).Refresh("wait_for").Query(q).Do(ctx)
-	fmt.Println("======", time.Since(t))
+	rep, err := client.DeleteByQuery(index).Query(q).Do(ctx)
+	//fmt.Println("======", time.Since(t))
 	if err != nil {
 		return 0, err
 	}

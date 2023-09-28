@@ -11,10 +11,10 @@ import (
 	"testing"
 )
 
-func show() {
+func TestShowTableDetail(t *testing.T) {
 	//	查看
 	ctx := context.TODO()
-	mp, err := es.GetTableDetail(ctx, table)
+	mp, err := es.GetIndexDetail(ctx, table)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -22,72 +22,14 @@ func show() {
 	fmt.Println(string(c))
 }
 
-func query() {
-	//***********ADD ALL************
+func TestShowCount(t *testing.T) {
+	//	查看
 	ctx := context.TODO()
+	mp, err := es.Count(ctx, table)
+	fmt.Println(err)
+	fmt.Println(mp)
 
-	//***********Select ALL************
-	//sql查询
-	// keyword
-	//sql := "select * from shop where name_keyword='guo' limit 10"
-	//sql := "select * from shop where name_text_default='liu' limit 10"//自动分词
-	//sql := "select * from shop where name_text_analyzer='dong' limit 10"//分词
-	//sql := "select * from shop where name_text_s_analyzer='li' limit 10"//分词
-
-	// 原始sql不支持array类型的dsl，需要自己写
-	//sql := "select * from shop where name_text_default = 'li' limit 10"//分词 数组分词了,全文搜索配置fields
-	sql := "select id from test_gzy " //分词 数组分词了,全文搜索配置fields
-
-	//时间可以判断大小 ok
-	//sql := "select * from shop where ntime >= '2022-08-09 17:25:15' limit 10"//分词
-
-	// 数字大小判断 ok
-	//sql := "select * from shop where high > 13 limit 10"//分词
-
-	dat := &[]Result{}
-	total, err := es.QuerySql(ctx, sql, dat)
-	if err != nil {
-		fmt.Printf("search es data failed | err : %s\n", err)
-		return
-	}
-	return
-	fmt.Println("total =", total)
-
-	//for _, d := range *dat {
-	//	b, _ := json.Marshal(d)
-	//	fmt.Println(string(b))
-	//}
-	b, _ := json.Marshal(dat)
-	fmt.Println(string(b))
-
-	////删除es数据
-	// delRep, err := ees.DelESItemByID(ctx, table, 111111)
-	// if err != nil {
-	// 	fmt.Printf("delete es data failed | err : %s\n", err)
-	// 	return
-	// }
-	// fmt.Printf("%+v\n", delRep)
-
-	//批量删除
-	// delRep, err := ees.DelESItemByIDs(ctx, table, []interface{}{111118, 111119})
-	// if err != nil {
-	// 	fmt.Printf("delete es data failed | err : %s\n", err)
-	// 	return
-	// }
-	// fmt.Printf("%+v\n", delRep)
-
-	//mp, err := ees.GetTableDetail(ctx, table)
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//}
-	//b, _ := json.Marshal(mp)
-	//fmt.Println(string(b))
-
-	//Test_INIT_Table()
-
-	//SqlTest()
 }
-
 func queryKeyword() { //query more field like 全文检索
 	ctx := context.TODO()
 	r, err := es.Client().Search("shop").Query(elastic.NewQueryStringQuery("aa").Field("name_text_default").Field("lis")).Do(ctx)
@@ -160,4 +102,43 @@ func TestSql(t *testing.T) {
 
 	dsl, _, _ := elasticsql.Convert(sql)
 	fmt.Println(dsl)
+}
+func TestQuerySql(t *testing.T) {
+	//***********ADD ALL************
+	ctx := context.TODO()
+
+	//***********Select ALL************
+	//sql查询
+	// keyword
+	//sql := "select * from shop where name_keyword='guo' limit 10"
+	//sql := "select * from shop where name_text_default='liu' limit 10"//自动分词
+	//sql := "select * from shop where name_text_analyzer='dong' limit 10"//分词
+	//sql := "select * from shop where name_text_s_analyzer='li' limit 10"//分词
+
+	// 原始sql不支持array类型的dsl，需要自己写
+	//sql := "select * from shop where name_text_default = 'li' limit 10"//分词 数组分词了,全文搜索配置fields
+	sql := "select id from test_gzy " //分词 数组分词了,全文搜索配置fields
+
+	//时间可以判断大小 ok
+	//sql := "select * from shop where ntime >= '2022-08-09 17:25:15' limit 10"//分词
+
+	// 数字大小判断 ok
+	//sql := "select * from shop where high > 13 limit 10"//分词
+
+	dat := &[]Result{}
+	total, err := es.QuerySql(ctx, sql, dat)
+	if err != nil {
+		fmt.Printf("search es data failed | err : %s\n", err)
+		return
+	}
+	return
+	fmt.Println("total =", total)
+
+	//for _, d := range *dat {
+	//	b, _ := json.Marshal(d)
+	//	fmt.Println(string(b))
+	//}
+	b, _ := json.Marshal(dat)
+	fmt.Println(string(b))
+
 }
