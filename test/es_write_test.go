@@ -12,13 +12,10 @@ import (
 )
 
 var host = "http://192.168.1.124:9200"
-
-//var host = "https://dev-elastic.carsome.dev"
 var table = "my_inventory_car_index_test-242"
 var uname = "elastic"
 var pwd = "Carsome123"
 
-//var pwd = "s6G74t5hww202p1QETAH20ab"
 var es *ees.Eelastic
 
 type Result struct {
