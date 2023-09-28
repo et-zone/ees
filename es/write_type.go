@@ -1,4 +1,4 @@
-package ees
+package es
 
 type Fields struct {
 	Type  string `json:"type"`
@@ -6,14 +6,14 @@ type Fields struct {
 }
 
 type Field struct {
-	Type  string `json:"type"`
-	Index *bool  `json:"index,omitempty"` //default true，支持搜索,旧版本使用:"not_analyzed"
-	Store *bool  `json:"store,omitempty"` //default false ,need not set
+	Type           string             `json:"type"`
+	Index          *bool              `json:"index,omitempty"`           //default true，支持搜索,旧版本使用:"not_analyzed"
+	Store          *bool              `json:"store,omitempty"`           //default false ,need not set
 	Format         string             `json:"format,omitempty"`          //时间类型格式化
 	Analyzer       string             `json:"analyzer,omitempty"`        //写入时就进行分词，最大拆分=ik_max_word,粗略拆分=ik_smart  //text使用
 	SearchAnalyzer string             `json:"search_analyzer,omitempty"` //搜索阶段进行分词，会覆盖上面的属性 ，"search_analyzer": "ik_smart"  //text使用
 	Fields         *map[string]Fields `json:"fields,omitempty"`          //复合 字段，用于text 的全文搜索,如 type = keyword
-	DocValues *bool              `json:"doc_values,omitempty"` //default true ,need not set
+	DocValues      *bool              `json:"doc_values,omitempty"`      //default true ,need not set
 	// IgnoreAbove int64  `json:"ignore_above,omitempty"` //对超过 ignore_above 的字符串，analyzer 不会进行处理
 	// NullValue   string `json:"null_value,omitempty"` //支持字段为null，只有keyword类型支持，自定义Mapping常用参数，实际操作时不存储null数据
 	// Store bool `json:"store,omitempty"` //(用于单独存储该field的原始值)默认情况下已存储
@@ -82,4 +82,3 @@ func (f *Field) SetSearchAnalyzer(s string) *Field {
 	f.SearchAnalyzer = s
 	return f
 }
-
