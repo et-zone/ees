@@ -95,6 +95,10 @@ func (e *EQueryReq) SetCollapseField(collapseField string) *EQueryReq {
 	return e
 }
 
+func (e *EQueryReq) Source() (interface{}, error) {
+	return e.Query.query.Source()
+}
+
 /*
 	eg: elastic.NewFieldSort("field").Desc()
 	desc = 4,3,2,1
@@ -108,6 +112,17 @@ func (e *EQueryReq) SetSort(sortField ...elastic.Sorter) *EQueryReq {
 type MultiQueryReq struct {
 	Index string       `json:"index"`
 	Req   []*EQueryReq `json:"req"`
+}
+
+func NewMultiQueryReq(index string) *MultiQueryReq {
+	return &MultiQueryReq{
+		Index: index,
+	}
+}
+
+func (m *MultiQueryReq) Add(req ...*EQueryReq) *MultiQueryReq {
+	m.Req = append(m.Req, req...)
+	return m
 }
 
 type Query struct {

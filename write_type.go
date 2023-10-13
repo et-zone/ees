@@ -1,19 +1,19 @@
 package ees
 
-type Fields struct {
+type Rows struct {
 	Type  string `json:"type"`
 	Index bool   `json:"index,omitempty"` //默认选true，支持搜索,旧版本使用:"not_analyzed"
 }
 
-type Field struct {
-	Type           string             `json:"type"`
-	Index          *bool              `json:"index,omitempty"`           //default true，支持搜索,旧版本使用:"not_analyzed"
-	Store          *bool              `json:"store,omitempty"`           //default false ,need not set
-	Format         string             `json:"format,omitempty"`          //时间类型格式化
-	Analyzer       string             `json:"analyzer,omitempty"`        //写入时就进行分词，最大拆分=ik_max_word,粗略拆分=ik_smart  //text使用
-	SearchAnalyzer string             `json:"search_analyzer,omitempty"` //搜索阶段进行分词，会覆盖上面的属性 ，"search_analyzer": "ik_smart"  //text使用
-	Fields         *map[string]Fields `json:"fields,omitempty"`          //复合 字段，用于text 的全文搜索,如 type = keyword
-	DocValues      *bool              `json:"doc_values,omitempty"`      //default true ,need not set
+type Row struct {
+	Type           string           `json:"type"`
+	Index          *bool            `json:"index,omitempty"`           //default true，支持搜索,旧版本使用:"not_analyzed"
+	Store          *bool            `json:"store,omitempty"`           //default false ,need not set
+	Format         string           `json:"format,omitempty"`          //时间类型格式化
+	Analyzer       string           `json:"analyzer,omitempty"`        //写入时就进行分词，最大拆分=ik_max_word,粗略拆分=ik_smart  //text使用
+	SearchAnalyzer string           `json:"search_analyzer,omitempty"` //搜索阶段进行分词，会覆盖上面的属性 ，"search_analyzer": "ik_smart"  //text使用
+	Rows           *map[string]Rows `json:"fields,omitempty"`          //复合 字段，用于text 的全文搜索,如 type = keyword
+	DocValues      *bool            `json:"doc_values,omitempty"`      //default true ,need not set
 	// IgnoreAbove int64  `json:"ignore_above,omitempty"` //对超过 ignore_above 的字符串，analyzer 不会进行处理
 	// NullValue   string `json:"null_value,omitempty"` //支持字段为null，只有keyword类型支持，自定义Mapping常用参数，实际操作时不存储null数据
 	// Store bool `json:"store,omitempty"` //(用于单独存储该field的原始值)默认情况下已存储
@@ -21,23 +21,23 @@ type Field struct {
 
 }
 
-//default type=text
-func NewField() *Field {
-	return &Field{
+//db Field ,default type=text
+func NewRow() *Row {
+	return &Row{
 		Type: Type.Text(),
 	}
 }
 
 //must do it.
-func (f *Field) SetType(t string) *Field {
+func (f *Row) SetType(t string) *Row {
 	f.Type = t
 	return f
 }
 
 //type = keyword,text ，选填
-func (f *Field) SetFields(t string) *Field {
+func (f *Row) SetRows(t string) *Row {
 
-	f.Fields = &map[string]Fields{
+	f.Rows = &map[string]Rows{
 		row: {Type: t},
 	}
 	return f
@@ -45,25 +45,25 @@ func (f *Field) SetFields(t string) *Field {
 
 //default true. type = text,keyward,boolean,date,geo_point,number
 //有默认值，可以不处理
-func (f *Field) CanIndex(can bool) *Field {
+func (f *Row) CanIndex(can bool) *Row {
 	f.Index = &can
 	return f
 }
 
 //default false. type = text,keyword,binary,boolean,date,number
-func (f *Field) CanStore(can bool) *Field {
+func (f *Row) CanStore(can bool) *Row {
 	f.Store = &can
 	return f
 }
 
 // type = keyword,boolean,binary,date,number
-func (f *Field) CanDocValues(can bool) *Field {
+func (f *Row) CanDocValues(can bool) *Row {
 	f.DocValues = &can
 	return f
 }
 
 //  type = data ，一般 会主动选择设置此参数
-func (f *Field) SetFormat(fmat string) *Field {
+func (f *Row) SetFormat(fmat string) *Row {
 	if f.Type != Type.Date() {
 		panic("set format date error")
 	}
@@ -72,13 +72,13 @@ func (f *Field) SetFormat(fmat string) *Field {
 }
 
 //type = text ,一般 会主动选择设置此参数
-func (f *Field) SetAnalyzer(a string) *Field {
+func (f *Row) SetAnalyzer(a string) *Row {
 	f.Analyzer = a
 	return f
 }
 
 //type = text ，一般 会主动选择设置此参数
-func (f *Field) SetSearchAnalyzer(s string) *Field {
+func (f *Row) SetSearchAnalyzer(s string) *Row {
 	f.SearchAnalyzer = s
 	return f
 }
@@ -213,13 +213,13 @@ const (
 )
 
 type Mapping struct {
-	Dynamic string           `json:"dynamic,omitempty"` //default true
-	Fields  map[string]Field `json:"properties"`
+	Dynamic string         `json:"dynamic,omitempty"` //default true
+	Rows    map[string]Row `json:"properties"`
 }
 
 func NewMapping() *Mapping {
 	return &Mapping{
-		Fields: map[string]Field{},
+		Rows: map[string]Row{},
 	}
 }
 
@@ -228,11 +228,11 @@ func (m *Mapping) SetDynamic(dynamic string) *Mapping {
 	return m
 }
 
-func (m *Mapping) SetField(fielName string, field *Field) *Mapping {
+func (m *Mapping) SetRow(fielName string, field *Row) *Mapping {
 	if fielName == "" {
 		return m
 	}
-	m.Fields[fielName] = *field
+	m.Rows[fielName] = *field
 	return m
 }
 

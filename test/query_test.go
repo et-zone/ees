@@ -115,3 +115,14 @@ func TestMultiSearch(t *testing.T) {
 	fmt.Println(err)
 	fmt.Println(result)
 }
+
+func TestBuildCondition(t *testing.T) {
+	cd := ees.NewQueryCondition(table)
+	cd.SetPage(1, 10)
+	field := ees.NewQFieldAnd("modelID").SetEq(8840)
+	cd.AddField(field)
+	request := ees.BuildEQueryReq(cd)
+	val, err := es.Search(context.TODO(), request)
+	fmt.Println(err)
+	fmt.Println(val)
+}

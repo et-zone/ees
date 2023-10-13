@@ -1,9 +1,9 @@
 # ees
 
-### 描述
-- 针对V7版本的es，实现功能的化代码库
+### Descriptions
+- Implementing a functionalised code base for the V7 version of es
 
-### 使用
-- 直接下拉代码即可
+### Run
+- Just pull the code directly
 
 
